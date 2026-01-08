@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  
+  <!-- 🛑 1. الحارس يقف في الباب (أول كود يتم تنفيذه) -->
+  <script>
+    // هل نحن تطبيق مثبت (PWA)؟
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+    if (!isStandalone) {
+      // ⛔ أنت متصفح! توقف فوراً واذهب لصفحة التحميل
+      window.stop(); 
+      window.location.href = "landing.html";
+    }
+    // ✅ إذا كنت تطبيقاً، سيكمل الكود للأسفل
+  </script>
+
+  <!-- إعدادات الشاشة -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Order delicious food online">
+
+  <!-- iOS Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Pizza Hot">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png">
+
+  <title>Restdz</title>
+  <link rel="manifest" href="manifest.json">
+  
+  <style>
+    /* 1. إعدادات الصفحة */
+    body { 
+      inset: 0; 
+      overflow: hidden; 
+      margin: 0; 
+      padding: 0; 
+      position: fixed; 
+      background-color: #FFFFFF; 
+    }
+
+    /* 2. شاشة السبلاش (Splash Screen) */
+    #splash { 
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      background: #FFFFFF; 
+      z-index: 10; /* طبقة متوسطة */
+      transition: opacity 0.5s; 
+    }
+    #splash img { width: 100px; height: 100px; }
+
+    /* 
+       3. وعاء الكابتشا (الأهم) 
+       يجب أن يكون Z-index أعلى من السبلاش لكي يكون قابلاً للنقر
+    */
+    #recaptcha-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 99999; /* فوق الجميع (Top Priority) */
+      visibility: visible;
+      display: block;
+    }
+  </style>
+
+  <script>
+    // إخفاء شاشة التحميل بذكاء بعد انتهاء فلاتر
+    window.addEventListener('load', function() {
+      // ننتظر قليلاً للتأكد من أن فلاتر رسم أول فريم
+      setTimeout(function() {
+        var splash = document.getElementById('splash');
+        if (splash) {
+          splash.style.opacity = '0'; // اختفاء تدريجي
+          setTimeout(function() { splash.remove(); }, 500); // حذف نهائي من الذاكرة
+        }
+      }, 2500); // زيادة الوقت قليلاً لضمان استقرار النظام
+    });
+  </script>
+</head>
+<body>
+
+  <!-- ✅ وعاء الكابتشا: وضعناه أولاً لكي يتم حجزه في الـ DOM -->
+  <div id="recaptcha-container"></div>
+
+  <!-- ✅ شاشة الانتظار -->
+  <div id="splash">
+     <img src="icons/Icon-192.png" alt="Loading...">
+  </div>
+
+  <!-- ✅ محرك فلاتر -->
+  <script src="flutter_bootstrap.js" defer></script>
+</body>
+</html>

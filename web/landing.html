@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>PizzaHot App</title>
+  
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="manifest" href="manifest.json">
+
+  <!-- ✅ مكتبة توليد QR Code (خفيفة جداً وموثوقة) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    /* --- 🎨 الأساسيات --- */
+    :root {
+      --primary: #FC6011;
+      --ios-blur: rgba(0, 0, 0, 0.85);
+      --google-green: #01875f;
+    }
+
+    body {
+      margin: 0; padding: 0;
+      background: #f2f2f7;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Roboto, sans-serif;
+      height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      overflow: hidden; user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* --- 📱 قسم الموبايل --- */
+    #mobile-view {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      width: 100%; height: 100%;
+    }
+
+    .main-card {
+      background: white; width: 85%; max-width: 380px;
+      padding: 40px 20px; border-radius: 28px;
+      text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+    }
+    .app-icon {
+      width: 100px; height: 100px; border-radius: 22px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15); margin-bottom: 20px;
+    }
+    .title { font-size: 22px; font-weight: 800; color: #000; margin-bottom: 8px; }
+    .subtitle { font-size: 15px; color: #888; margin-bottom: 30px; line-height: 1.4; }
+    
+    .btn-install {
+      background: var(--primary); color: white; border: none;
+      width: 100%; padding: 18px; border-radius: 16px;
+      font-size: 17px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .btn-install:active { transform: scale(0.97); }
+
+    /* شريط التحميل */
+    .progress-wrapper {
+      display: none; width: 100%; margin-top: 10px; text-align: left;
+    }
+    html[dir="rtl"] .progress-wrapper { text-align: right; }
+    .progress-track {
+      width: 100%; height: 6px; background-color: #E0E0E0;
+      border-radius: 10px; overflow: hidden; margin-bottom: 10px;
+    }
+    .progress-fill {
+      height: 100%; width: 0%; background-color: var(--google-green);
+      border-radius: 10px; transition: width 0.2s linear;
+    }
+    .status-text { font-size: 13px; color: #555; font-weight: 600; display: flex; justify-content: space-between; }
+    .percent { color: var(--google-green); }
+    .btn-open {
+      display: none; background: var(--google-green); color: white; border: none;
+      width: 100%; padding: 15px; border-radius: 50px;
+      font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 15px;
+      animation: popIn 0.3s ease;
+    }
+
+    /* --- 💻 قسم الديسكطوب (Desktop View) --- */
+    #desktop-view {
+      display: none; /* مخفي في الموبايل */
+      flex-direction: column; align-items: center; justify-content: center;
+      width: 100%; height: 100%;
+      background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+    }
+    .desktop-card {
+      background: white; padding: 40px 50px; border-radius: 30px;
+      text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,0.1);
+      max-width: 500px;
+    }
+    /* إطار الـ QR */
+    .qr-frame {
+      background: white;
+      border: 2px dashed #ddd;
+      padding: 15px; border-radius: 20px;
+      display: inline-block; margin: 25px 0;
+    }
+    /* المكان الذي سيُرسم فيه الـ QR */
+    #qrcode {
+      width: 180px; height: 180px;
+      display: flex; justify-content: center; align-items: center;
+    }
+    /* تحسين النصوص في الديسكطوب */
+    .desktop-hint { font-size: 16px; color: #555; line-height: 1.6; direction: ltr; }
+    html[dir="rtl"] .desktop-hint { direction: rtl; }
+
+    /* --- 🍎 iOS Wizard --- */
+    .ios-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--ios-blur); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      z-index: 9999; display: none; align-items: center; justify-content: center;
+      animation: fadeIn 0.3s ease;
+    }
+    .wizard-card {
+      background: white; width: 90%; max-width: 340px;
+      border-radius: 24px; padding: 30px 20px;
+      text-align: center;
+    }
+    .tutorial-img { width: 100%; border-radius: 12px; margin: 15px 0; border: 1px solid #eee; }
+    .step-content { display: none; } .step-content.active { display: block; }
+    .nav-btn { background: #007AFF; color: white; border: none; padding: 12px 30px; border-radius: 50px; font-size: 16px; width: 100%; margin-top: 10px; }
+    .dots { display: flex; justify-content: center; gap: 5px; margin-bottom: 15px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; }
+    .dot.active { background: #007AFF; width: 20px; border-radius: 10px; }
+
+    @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
+    @keyframes popIn { from {transform: scale(0.8); opacity: 0;} to {transform: scale(1); opacity: 1;} }
+  </style>
+</head>
+<body>
+
+  <!-- 📱 قسم الموبايل -->
+  <div id="mobile-view">
+    <div class="main-card" id="mainCard">
+      <img src="icons/Icon-192.png" class="app-icon" alt="Logo">
+      <div class="title">PizzaHot App</div>
+      <div class="subtitle" id="t-subtitle">أشهى المأكولات تصلك ساخنة! 🍕</div>
+
+      <button class="btn-install" id="actionBtn">
+        <span id="t-btn">تحميل التطبيق</span>
+        <svg id="androidIcon" width="22" height="22" fill="white" viewBox="0 0 24 24" style="margin-left:8px"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-1.07 3.97-2.9 5.34z"/></svg>
+        <svg id="appleIcon" width="22" height="22" fill="white" viewBox="0 0 384 512" style="display:none; margin-left:8px"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 52.3-11.4 69.5-34.3z"/></svg>
+      </button>
+
+      <div class="progress-wrapper" id="progressWrapper">
+        <div class="status-text">
+          <span id="statusLabel">جاري التنزيل...</span>
+          <span class="percent" id="percentLabel">0%</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div style="font-size: 11px; color:#999; margin-top:5px;">Verified by Play Protect 🛡️</div>
+      </div>
+
+      <button class="btn-open" id="openBtn" onclick="window.location.reload()"><span id="t-open">فتح التطبيق</span> 🚀</button>
+    </div>
+  </div>
+
+  <!-- 💻 قسم الديسكطوب (مع QR Code التلقائي) -->
+  <div id="desktop-view">
+    <div class="desktop-card">
+      <img src="icons/Icon-192.png" width="80" style="border-radius:18px; margin-bottom:15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+      <h2 style="margin:0 0 5px 0; color:#333;">PizzaHot App</h2>
+      <div style="font-size:14px; color:#888;">Order delicious food 🍕</div>
+      
+      <!-- إطار الـ QR -->
+      <div class="qr-frame">
+        <!-- هنا سيتم رسم الـ QR Code بالكود -->
+        <div id="qrcode"></div>
+      </div>
+
+      <div class="desktop-hint" id="d-hint">
+        التطبيق مصمم للهواتف الذكية 📱<br>
+        <b>امسح الرمز</b> بكاميرا هاتفك للتحميل فوراً.
+      </div>
+    </div>
+  </div>
+
+  <!-- 🍎 نافذة تعليمات الآيفون -->
+  <div class="ios-overlay" id="iosOverlay">
+    <div class="wizard-card">
+      <div class="dots"><div class="dot active" id="dot1"></div><div class="dot" id="dot2"></div><div class="dot" id="dot3"></div></div>
+      <div class="step-content active" id="step1">
+        <div class="step-title" id="t-s1-title"></div><div class="step-desc" id="t-s1-desc"></div>
+        <img src="images/ios_step1.jpg" class="tutorial-img">
+        <button class="nav-btn" onclick="nextStep(2)" id="t-next1">التالي</button>
+      </div>
+      <div class="step-content" id="step2">
+        <div class="step-title" id="t-s2-title"></div><div class="step-desc" id="t-s2-desc"></div>
+        <img src="images/ios_step2.jpg" class="tutorial-img">
+        <button class="nav-btn" onclick="nextStep(3)" id="t-next2">التالي</button>
+      </div>
+      <div class="step-content" id="step3">
+        <div class="step-title" id="t-s3-title"></div><div class="step-desc" id="t-s3-desc"></div>
+        <div style="margin: 30px 0; font-size: 50px;">🎉</div>
+        <button class="nav-btn" onclick="closeOverlay()" id="t-done">فهمت</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- 🌍 الترجمات ---
+    const translations = {
+      ar: {
+        dir: 'rtl',
+        subtitle: 'أشهى المأكولات تصلك ساخنة! 🍕',
+        btnAndroid: 'تثبيت التطبيق', btnIos: 'تثبيت على الآيفون',
+        downloading: 'جاري التنزيل...', installing: 'جاري التثبيت...', open: 'فتح التطبيق',
+        desktopHint: 'التطبيق مصمم للهواتف الذكية 📱<br><b>امسح الرمز</b> بكاميرا هاتفك للتحميل فوراً.',
+        next: 'التالي', done: 'تم',
+        s1title: '1. اضغط زر المشاركة', s1desc: 'ستجده في الأسفل',
+        s2title: '2. إضافة إلى الصفحة الرئيسية', s2desc: 'اسحب القائمة للأعلى',
+        s3title: '3. اضغط "إضافة"', s3desc: 'في الزاوية العلوية'
+      },
+      fr: {
+        dir: 'ltr',
+        subtitle: 'Vos repas préférés, livrés chauds! 🍕',
+        btnAndroid: 'Installer', btnIos: 'Installer sur iPhone',
+        downloading: 'Téléchargement...', installing: 'Installation...', open: 'Ouvrir',
+        desktopHint: 'Disponible sur mobile uniquement 📱<br><b>Scannez le QR Code</b> pour installer.',
+        next: 'Suivant', done: 'Compris',
+        s1title: '1. Appuyez sur Partager', s1desc: 'En bas de l\'écran',
+        s2title: '2. Sur l\'écran d\'accueil', s2desc: 'Faites défiler vers le haut',
+        s3title: '3. Appuyez sur "Ajouter"', s3desc: 'En haut à droite'
+      },
+      en: {
+        dir: 'ltr',
+        subtitle: 'Delicious food, delivered hot! 🍕',
+        btnAndroid: 'Install App', btnIos: 'Install on iPhone',
+        downloading: 'Downloading...', installing: 'Installing...', open: 'Open App',
+        desktopHint: 'Available on mobile only 📱<br><b>Scan the QR Code</b> to install.',
+        next: 'Next', done: 'Got it',
+        s1title: '1. Tap Share', s1desc: 'Bottom of screen',
+        s2title: '2. Add to Home Screen', s2desc: 'Scroll up to find it',
+        s3title: '3. Tap "Add"', s3desc: 'Top right corner'
+      }
+    };
+
+    const ua = navigator.userAgent;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    let currentLangData;
+    let deferredPrompt;
+
+    window.onload = () => {
+      let userLang = navigator.language.slice(0, 2).toLowerCase();
+      if (!['ar', 'fr', 'en'].includes(userLang)) userLang = 'ar';
+      
+      currentLangData = translations[userLang];
+      
+      // ✅ المنطق الأوتوماتيكي: الديسكطوب vs الموبايل
+      if (!isMobile) {
+        // نحن في الحاسوب
+        document.getElementById('mobile-view').style.display = 'none';
+        document.getElementById('desktop-view').style.display = 'flex';
+        
+        // 1. توليد QR Code محلياً (باستخدام مكتبة JS)
+        // يأخذ الرابط الحالي للمتصفح ويحوله لصورة فوراً
+        new QRCode(document.getElementById("qrcode"), {
+          text: window.location.href,
+          width: 180,
+          height: 180,
+          colorDark : "#000000",
+          colorLight : "#ffffff",
+          correctLevel : QRCode.CorrectLevel.H
+        });
+        
+        // 2. ترجمة النصوص
+        document.getElementById('d-hint').innerHTML = currentLangData.desktopHint;
+        return; // توقف هنا ولا تكمل كود الموبايل
+      }
+
+      // نحن في الموبايل
+      applyTranslations(currentLangData);
+
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        window.location.href = "index.html";
+      }
+    };
+
+    function applyTranslations(t) {
+      document.documentElement.lang = document.documentElement.lang || 'ar';
+      document.documentElement.dir = t.dir;
+      document.getElementById('t-subtitle').innerText = t.subtitle;
+      document.getElementById('t-next1').innerText = t.next;
+      document.getElementById('t-next2').innerText = t.next;
+      document.getElementById('t-done').innerText = t.done;
+      document.getElementById('t-open').innerText = t.open;
+      document.getElementById('t-s1-title').innerText = t.s1title;
+      document.getElementById('t-s1-desc').innerText = t.s1desc;
+      document.getElementById('t-s2-title').innerText = t.s2title;
+      document.getElementById('t-s2-desc').innerText = t.s2desc;
+      document.getElementById('t-s3-title').innerText = t.s3title;
+      document.getElementById('t-s3-desc').innerText = t.s3desc;
+
+      const btnText = document.getElementById('t-btn');
+      if (isIOS) {
+        btnText.innerText = t.btnIos;
+        document.getElementById('androidIcon').style.display = 'none';
+        document.getElementById('appleIcon').style.display = 'block';
+      } else {
+        btnText.innerText = t.btnAndroid;
+      }
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+    });
+
+    document.getElementById('actionBtn').addEventListener('click', async () => {
+      if (isIOS) {
+        document.getElementById('iosOverlay').style.display = 'flex';
+        nextStep(1);
+      } else if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          deferredPrompt = null;
+          startPlayStoreSimulation();
+        }
+      } else {
+        alert(document.documentElement.lang === 'ar' ? "التطبيق مثبت أو غير مدعوم." : "App installed or unsupported.");
+      }
+    });
+
+    function startPlayStoreSimulation() {
+      document.getElementById('actionBtn').style.display = 'none';
+      const wrapper = document.getElementById('progressWrapper');
+      wrapper.style.display = 'block';
+      const fill = document.getElementById('progressFill');
+      const label = document.getElementById('statusLabel');
+      const percentLabel = document.getElementById('percentLabel');
+      let width = 0;
+      const totalTime = 80000; 
+      const intervalTime = 100;
+      const increment = 100 / (totalTime / intervalTime);
+
+      const timer = setInterval(() => {
+        if (width >= 100) {
+          clearInterval(timer);
+          wrapper.style.display = 'none';
+          document.getElementById('openBtn').style.display = 'block';
+        } else {
+          width += increment;
+          fill.style.width = width + '%';
+          percentLabel.innerText = Math.floor(width) + '%';
+          if (width > 85) label.innerText = currentLangData.installing;
+          else label.innerText = currentLangData.downloading;
+        }
+      }, intervalTime);
+    }
+
+    function nextStep(n) {
+      [1,2,3].forEach(i => {
+        document.getElementById(`step${i}`).classList.remove('active');
+        document.getElementById(`dot${i}`).classList.remove('active');
+      });
+      document.getElementById(`step${n}`).classList.add('active');
+      document.getElementById(`dot${n}`).classList.add('active');
+    }
+    function closeOverlay() { document.getElementById('iosOverlay').style.display = 'none'; }
+  </script>
+</body>
+</html>

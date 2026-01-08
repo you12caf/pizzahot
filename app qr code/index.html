@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جارِ التحميل...</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: { colors: { brand: '#FC6011', brandDark: '#e55000' } }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap');
+        body { font-family: 'Tajawal', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="text-center p-6">
+        <!-- لودينج بسيط -->
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-brand mx-auto mb-4"></div>
+        <h2 class="text-2xl font-bold text-gray-800">جارِ بدء التحميل...</h2>
+        <p class="text-gray-600 mt-2">إذا لم يبدأ التحميل تلقائياً، اضغط على الزر أدناه.</p>
+
+        <!-- 👇 هام جداً: ضع الرابط المباشر هنا مكان علامة # -->
+        <a id="downloadBtn" href="https://github.com/zephara24/app-downloads/raw/main/app-arm64-v8a-release.apk" 
+           class="mt-6 inline-block bg-brand text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-brandDark transition">
+            اضغط هنا للتحميل يدوياً
+        </a>
+    </div>
+
+    <!-- ⚡ السحر: سكربت التحميل التلقائي -->
+    <script>
+        window.onload = function() {
+            // ننتظر ثانية واحدة ثم نبدأ التحميل
+            setTimeout(function() {
+                document.getElementById('downloadBtn').click();
+            }, 1000);
+        };
+    </script>
+
+</body>
+</html>
